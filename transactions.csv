@@ -14,7 +14,7 @@ deposit,3,8,2.0
 withdrawal,4,9,1.5
 withdrawal,4,10,3.0
 dispute,3,1
-dispute,4,5
+dispute,4,10
 chargeback,3,5
 deposit,5,11,1.0
 deposit,6,12,2.0
@@ -22,4 +22,4 @@ deposit,5,13,2.0
 withdrawal,6,14,1.5
 withdrawal,6,15,3.0
 dispute,5,1
-dispute,6,5
+dispute,6,14
