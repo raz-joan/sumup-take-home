@@ -17,12 +17,20 @@ const calculateBalances = () => {
     }
 
     each.transactions.forEach(transaction => {
+      const numAmount = parseFloat(transaction.amount)
+
       switch (transaction.type) {
         case 'deposit':
           console.log(each.client, 'deposit')
+          transformedClient.available += numAmount
+          transformedClient.total += numAmount
           break
         case 'withdrawal':
           console.log(each.client, 'withdrawal')
+          if (numAmount <= transformedClient.available) {
+            transformedClient.available -= numAmount
+            transformedClient.total -= numAmount
+          }
           break
         case 'dispute':
           console.log(each.client, 'dispute')
@@ -37,6 +45,7 @@ const calculateBalances = () => {
           console.log(`error, no match found for ${transaction.type}`)
       }
     })
+    console.log(transformedClient)
   })
 }
 

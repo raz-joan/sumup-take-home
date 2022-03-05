@@ -53,7 +53,7 @@ total += deposit
 A withdraw is a debit to the client’s asset account, meaning it should decrease the available and total funds of the client account.
 
 ``` javascript
-if (withdrawal.amount > available) {
+if (withdrawal.amount <= available) {
   available -= withdrawal
   total -= withdrawal
 } else {
