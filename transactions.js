@@ -4,9 +4,7 @@ const csv = require('csv-parser')
 const clients = []
 
 const calculateBalances = () => {
-  clients.map(each => {
-    console.log(each.client)
-    console.log(each.transactions)
+  return clients.map(each => {
 
     const transformedClient = {
       client: each.client,
@@ -16,36 +14,59 @@ const calculateBalances = () => {
       locked: false
     }
 
+    const depositsWithrawals = each.transactions.filter(transaction => transaction.type === 'withdrawal' || transaction.type === 'deposit')
+
+    const disputes = each.transactions.filter(transaction => transaction.type === 'dispute')
+
     each.transactions.forEach(transaction => {
       const numAmount = parseFloat(transaction.amount)
 
       switch (transaction.type) {
         case 'deposit':
-          console.log(each.client, 'deposit')
           transformedClient.available += numAmount
           transformedClient.total += numAmount
           break
         case 'withdrawal':
-          console.log(each.client, 'withdrawal')
           if (numAmount <= transformedClient.available) {
             transformedClient.available -= numAmount
             transformedClient.total -= numAmount
           }
           break
         case 'dispute':
-          console.log(each.client, 'dispute')
+          const matchingTransactionDispute = depositsWithrawals.find(possibleDispute => possibleDispute.tx === transaction.tx)
+
+          if (matchingTransactionDispute) {
+            transformedClient.available -= parseFloat(matchingTransactionDispute.amount)
+            transformedClient.held += parseFloat(matchingTransactionDispute.amount)
+          }
           break
         case 'resolve':
-          console.log(each.client, 'resolve')
+          const matchingTransactionResolve = depositsWithrawals.find(possibleDispute => possibleDispute.tx === transaction.tx)
+
+          const matchingDisputeResolve = disputes.find(matchDispute => matchDispute.tx === transaction.tx)
+
+          if (matchingTransactionResolve && matchingDisputeResolve) {
+            transformedClient.available += parseFloat(matchingTransactionResolve.amount)
+            transformedClient.held -= parseFloat(matchingTransactionResolve.amount)
+          }
           break
         case 'chargeback':
-          console.log(each.client, 'chargeback')
+          const matchingTransactionChargeback = depositsWithrawals.find(possibleDispute => possibleDispute.tx === transaction.tx)
+
+          const matchingDisputeChargeback = disputes.find(matchDispute => matchDispute.tx === transaction.tx)
+
+          if (matchingTransactionChargeback && matchingDisputeChargeback) {
+            transformedClient.held -= parseFloat(matchingTransactionChargeback.amount)
+            transformedClient.total -= parseFloat(matchingTransactionChargeback.amount)
+            transformedClient.locked = true
+          }
           break
         default:
-          console.log(`error, no match found for ${transaction.type}`)
+          console.log(`error, no match found for ${transaction.type} with id ${transaction.tx} for client ${each.client}`)
       }
     })
-    console.log(transformedClient)
+
+    return transformedClient
   })
 }
 
@@ -75,6 +96,7 @@ fs.createReadStream('transactions.csv')
   .on('end', () => {
     // console.table(clients)
     console.log(clients)
-    // console.log(clients[0].transactions)
-    calculateBalances()
+    const updated = calculateBalances()
+    // console.table(updated)
+    console.log(updated)
   })
