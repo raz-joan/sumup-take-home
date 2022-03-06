@@ -19,25 +19,24 @@ const calculateBalances = () => {
     const disputes = each.transactions.filter(transaction => transaction.type === 'dispute')
 
     each.transactions.forEach(transaction => {
-      const numAmount = parseFloat(transaction.amount)
 
       switch (transaction.type) {
         case 'deposit':
-          transformedClient.available += numAmount
-          transformedClient.total += numAmount
+          transformedClient.available += transaction.amount
+          transformedClient.total += transaction.amount
           break
         case 'withdrawal':
-          if (numAmount <= transformedClient.available) {
-            transformedClient.available -= numAmount
-            transformedClient.total -= numAmount
+          if (transaction.amount <= transformedClient.available) {
+            transformedClient.available -= transaction.amount
+            transformedClient.total -= transaction.amount
           }
           break
         case 'dispute':
           const matchingTransactionDispute = depositsWithrawals.find(possibleDispute => possibleDispute.tx === transaction.tx)
 
           if (matchingTransactionDispute) {
-            transformedClient.available -= parseFloat(matchingTransactionDispute.amount)
-            transformedClient.held += parseFloat(matchingTransactionDispute.amount)
+            transformedClient.available -= matchingTransactionDispute.amount
+            transformedClient.held += matchingTransactionDispute.amount
           }
           break
         case 'resolve':
@@ -46,8 +45,8 @@ const calculateBalances = () => {
           const matchingDisputeResolve = disputes.find(matchDispute => matchDispute.tx === transaction.tx)
 
           if (matchingTransactionResolve && matchingDisputeResolve) {
-            transformedClient.available += parseFloat(matchingTransactionResolve.amount)
-            transformedClient.held -= parseFloat(matchingTransactionResolve.amount)
+            transformedClient.available += matchingTransactionResolve.amount
+            transformedClient.held -= matchingTransactionResolve.amount
           }
           break
         case 'chargeback':
@@ -56,8 +55,8 @@ const calculateBalances = () => {
           const matchingDisputeChargeback = disputes.find(matchDispute => matchDispute.tx === transaction.tx)
 
           if (matchingTransactionChargeback && matchingDisputeChargeback) {
-            transformedClient.held -= parseFloat(matchingTransactionChargeback.amount)
-            transformedClient.total -= parseFloat(matchingTransactionChargeback.amount)
+            transformedClient.held -= matchingTransactionChargeback.amount
+            transformedClient.total -= matchingTransactionChargeback.amount
             transformedClient.locked = true
           }
           break
@@ -73,23 +72,23 @@ const calculateBalances = () => {
 fs.createReadStream('transactions.csv')
   .pipe(csv())
   .on('data', (row) => {
-    const foundClientIndex = clients.findIndex(each => each.client === Number(row.client))
+    const foundClientIndex = clients.findIndex(each => each.client === parseInt(row.client))
 
     if (foundClientIndex < 0) {
       const user = {
-        client: Number(row.client),
+        client: parseInt(row.client),
         transactions: [{
           type: row.type,
-          tx: Number(row.tx),
-          amount: Number(row.amount).toFixed(4)
+          tx: parseInt(row.tx),
+          amount: parseFloat(row.amount)
         }]
       }
       clients.push(user)
     } else {
       clients[foundClientIndex].transactions.push({
         type: row.type,
-        tx: Number(row.tx),
-        amount: Number(row.amount).toFixed(4)
+        tx: parseInt(row.tx),
+        amount: parseFloat(row.amount)
       })
     }
   })
