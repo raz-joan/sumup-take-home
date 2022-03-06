@@ -69,6 +69,25 @@ const calculateBalances = () => {
   })
 }
 
+const writeToCSVFile = (clientList) => {
+  const filename = 'accounts.csv'
+  fs.writeFile(filename, extractAsCSV(clientList), err => {
+    if (err) {
+      console.log('Error writing to csv file', err)
+    } else {
+      console.log(`saved as ${filename}`)
+    }
+  })
+}
+
+const extractAsCSV = (clientList) => {
+  const header = ["client,available,held,total,locked"]
+  const rows = clientList.map(each => {
+    return `${each.client},${each.available.toFixed(4)},${each.held.toFixed(4)},${each.total.toFixed(4)},${each.locked}`
+  })
+  return header.concat(rows).join('\n')
+}
+
 fs.createReadStream('transactions.csv')
   .pipe(csv())
   .on('data', (row) => {
@@ -94,8 +113,9 @@ fs.createReadStream('transactions.csv')
   })
   .on('end', () => {
     // console.table(clients)
-    console.log(clients)
+    // console.log(clients)
     const updated = calculateBalances()
     // console.table(updated)
-    console.log(updated)
+    // console.log(updated)
+    writeToCSVFile(updated)
   })
