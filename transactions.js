@@ -1,6 +1,11 @@
 const fs = require('fs')
 const csv = require('csv-parser')
 
+const args = process.argv.slice(2)
+
+const inputPath = args[0]
+const outputPath = args[1]
+
 const clients = []
 
 const calculateBalances = () => {
@@ -70,7 +75,7 @@ const calculateBalances = () => {
 }
 
 const writeToCSVFile = (clientList) => {
-  const filename = 'accounts.csv'
+  const filename = outputPath
   fs.writeFile(filename, extractAsCSV(clientList), err => {
     if (err) {
       console.log('Error writing to csv file', err)
@@ -85,10 +90,11 @@ const extractAsCSV = (clientList) => {
   const rows = clientList.map(each => {
     return `${each.client},${each.available.toFixed(4)},${each.held.toFixed(4)},${each.total.toFixed(4)},${each.locked}`
   })
+  console.log(header.concat(rows).join('\n'))
   return header.concat(rows).join('\n')
 }
 
-fs.createReadStream('transactions.csv')
+fs.createReadStream(inputPath)
   .pipe(csv())
   .on('data', (row) => {
     const foundClientIndex = clients.findIndex(each => each.client === parseInt(row.client))
@@ -112,10 +118,6 @@ fs.createReadStream('transactions.csv')
     }
   })
   .on('end', () => {
-    // console.table(clients)
-    // console.log(clients)
     const updated = calculateBalances()
-    // console.table(updated)
-    // console.log(updated)
     writeToCSVFile(updated)
   })
